@@ -57,41 +57,13 @@ const columns: ColumnDef<Museum>[] = [
     },
     cell: ({ row }) => {
       const museum = row.original;
+      const regionLabel = museum.region?.trim() ?? "";
+      const subtitle = regionLabel || "지역 정보 없음";
 
       return (
         <div className="space-y-1">
           <p className="font-medium text-foreground">{row.getValue("name")}</p>
-          {museum.facilityType ? (
-            <p className="text-xs text-muted-foreground">{museum.facilityType}</p>
-          ) : null}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "address",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4 h-8 data-[state=open]:bg-accent"
-        >
-          주소
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const address = row.getValue<string>("address");
-      const { lotAddress } = row.original;
-
-      return (
-        <div className="space-y-1 text-sm">
-          <p className="font-medium text-foreground">{address || "주소 정보 없음"}</p>
-          {lotAddress ? (
-            <p className="text-xs text-muted-foreground">{lotAddress}</p>
-          ) : null}
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
         </div>
       );
     },
