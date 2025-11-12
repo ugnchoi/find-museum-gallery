@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 
@@ -28,7 +28,7 @@ type ProvinceOption = {
   count: number;
 };
 
-const defaultColumns: ColumnDef<Museum>[] = [
+const columns: ColumnDef<Museum>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -129,29 +129,52 @@ const distanceColumn: ColumnDef<Museum> = {
   }
 };
 
+const nearbyColumns: ColumnDef<Museum>[] = [columns[0], distanceColumn, ...columns.slice(1)];
+
 type NearbyState = "idle" | "locating" | "fetching" | "error";
 
 const NEARBY_RADIUS_OPTIONS = [10, 25, 50];
 
 export default function HomePage() {
-  const [museums, setMuseums] = React.useState<Museum[]>([]);
-  const [totalCount, setTotalCount] = React.useState(0);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [nearbyMuseums, setNearbyMuseums] = React.useState<Museum[] | null>(null);
-  const [nearbyState, setNearbyState] = React.useState<NearbyState>("idle");
-  const [nearbyRadius, setNearbyRadius] = React.useState<number>(NEARBY_RADIUS_OPTIONS[1]);
-  const [nearbyError, setNearbyError] = React.useState<string | null>(null);
-  const [userLocation, setUserLocation] = React.useState<GeoCoordinate | null>(null);
-  const [usedFallback, setUsedFallback] = React.useState(false);
-  const [regions, setRegions] = React.useState<RegionOption[]>([]);
-  const [regionsError, setRegionsError] = React.useState<string | null>(null);
-  const [regionsLoading, setRegionsLoading] = React.useState(false);
-  const [provinces, setProvinces] = React.useState<ProvinceOption[]>([]);
-  const [selectedProvince, setSelectedProvince] = React.useState<string>("");
-  const [selectedRegion, setSelectedRegion] = React.useState<string>("");
+  const [activeTab, setActiveTab] = useState<"regions" | "nearby" | "settings">("regions");
+  const [museums, setMuseums] = useState<Museum[]>([]);
+  const [regionTotalCount, setRegionTotalCount] = useState(0);
+  const [nearbyTotalCount, setNearbyTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [nearbyMuseums, setNearbyMuseums] = useState<Museum[] | null>(null);
+  const [nearbyState, setNearbyState] = useState<NearbyState>("idle");
+  const [nearbyRadius, setNearbyRadius] = useState<number>(NEARBY_RADIUS_OPTIONS[1]);
+  const [nearbyError, setNearbyError] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<GeoCoordinate | null>(null);
+  const [usedFallback, setUsedFallback] = useState(false);
+  const [regions, setRegions] = useState<RegionOption[]>([]);
+  const [regionsError, setRegionsError] = useState<string | null>(null);
+  const [regionsLoading, setRegionsLoading] = useState(false);
+  const [provinces, setProvinces] = useState<ProvinceOption[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<string>("");
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const nearbyRequestIdRef = useRef(0);
 
-  const fetchMuseums = React.useCallback(
+  const isRegionView = activeTab === "regions";
+  const isNearbyView = activeTab === "nearby";
+
+  const isLocatingNearby = nearbyState === "locating";
+  const isFetchingNearby = nearbyState === "fetching";
+  const isNearbyError = nearbyState === "error";
+
+  const hasNearbyAttempt =
+    nearbyMuseums !== null || isLocatingNearby || isFetchingNearby || isNearbyError;
+  const hasNearbyResults = (nearbyMuseums?.length ?? 0) > 0;
+
+  const shouldShowRegionSkeleton = isRegionView && isLoading;
+  const shouldShowNearbySkeleton =
+    isNearbyView && !hasNearbyResults && (isLocatingNearby || isFetchingNearby);
+
+  const regionTableBusy = isRegionView ? isLoading : false;
+  const nearbyTableBusy = isNearbyView ? isFetchingNearby : false;
+
+  const fetchMuseums = useCallback(
     async (signal?: AbortSignal) => {
       if (signal?.aborted) {
         return;
@@ -159,7 +182,7 @@ export default function HomePage() {
 
       if (!selectedProvince && !selectedRegion) {
         setMuseums([]);
-        setTotalCount(0);
+        setRegionTotalCount(0);
         setError(null);
         setIsLoading(false);
         return;
@@ -212,7 +235,7 @@ export default function HomePage() {
             : [];
 
         setMuseums(items);
-        setTotalCount(payload.totalCount ?? items.length);
+        setRegionTotalCount(payload.totalCount ?? items.length);
       } catch (caughtError) {
         if (signal?.aborted) {
           return;
@@ -234,7 +257,11 @@ export default function HomePage() {
     [selectedProvince, selectedRegion]
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!isRegionView) {
+      return;
+    }
+
     const controller = new AbortController();
 
     void fetchMuseums(controller.signal);
@@ -242,9 +269,9 @@ export default function HomePage() {
     return () => {
       controller.abort();
     };
-  }, [fetchMuseums]);
+  }, [fetchMuseums, isRegionView]);
 
-  const fetchRegions = React.useCallback(async () => {
+  const fetchRegions = useCallback(async () => {
     setRegionsLoading(true);
     setRegionsError(null);
 
@@ -270,21 +297,21 @@ export default function HomePage() {
     }
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     void fetchRegions();
   }, [fetchRegions]);
 
-  const activeRegion = React.useMemo(
+  const activeRegion = useMemo(
     () => regions.find((region) => region.slug === selectedRegion),
     [regions, selectedRegion]
   );
 
-  const activeProvince = React.useMemo(
+  const activeProvince = useMemo(
     () => provinces.find((province) => province.slug === selectedProvince),
     [provinces, selectedProvince]
   );
 
-  const formatRegionLabel = React.useCallback((region: RegionOption) => {
+  const formatRegionLabel = useCallback((region: RegionOption) => {
     if (region.parentName && region.name.startsWith(`${region.parentName} `)) {
       const childLabel = region.name.slice(region.parentName.length).trim();
       return `${region.parentName} · ${childLabel}`;
@@ -293,9 +320,9 @@ export default function HomePage() {
     return region.name;
   }, []);
 
-  const formatProvinceLabel = React.useCallback((province: ProvinceOption) => province.name, []);
+  const formatProvinceLabel = useCallback((province: ProvinceOption) => province.name, []);
 
-  const filteredRegions = React.useMemo(() => {
+  const filteredRegions = useMemo(() => {
     if (!selectedProvince) {
       return [];
     }
@@ -303,7 +330,7 @@ export default function HomePage() {
     return regions.filter((region) => region.parentSlug === selectedProvince);
   }, [regions, selectedProvince]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!selectedRegion) {
       return;
     }
@@ -315,13 +342,13 @@ export default function HomePage() {
     }
   }, [filteredRegions, selectedRegion]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeRegion?.parentSlug && !selectedProvince) {
       setSelectedProvince(activeRegion.parentSlug);
     }
   }, [activeRegion, selectedProvince]);
 
-  const descriptionMessage = React.useMemo(() => {
+  const regionDescription = useMemo(() => {
     if (error) {
       return "데이터를 불러오지 못했습니다.";
     }
@@ -336,18 +363,28 @@ export default function HomePage() {
 
     if (activeRegion) {
       const label = formatRegionLabel(activeRegion);
-      return `${label} 지역에 ${totalCount.toLocaleString()}개 기관이 있습니다.`;
+      return `${label} 지역에 ${regionTotalCount.toLocaleString()}개 기관이 있습니다.`;
     }
 
     if (activeProvince) {
       const label = formatProvinceLabel(activeProvince);
-      return `${label} 지역에 ${totalCount.toLocaleString()}개 기관이 있습니다.`;
+      return `${label} 지역에 ${regionTotalCount.toLocaleString()}개 기관이 있습니다.`;
     }
 
-    return `${totalCount.toLocaleString()}개 기관이 등록되어 있습니다.`;
-  }, [activeProvince, activeRegion, error, formatProvinceLabel, formatRegionLabel, isLoading, selectedProvince, selectedRegion, totalCount]);
+    return `${regionTotalCount.toLocaleString()}개 기관이 등록되어 있습니다.`;
+  }, [
+    activeProvince,
+    activeRegion,
+    error,
+    formatProvinceLabel,
+    formatRegionLabel,
+    isLoading,
+    regionTotalCount,
+    selectedProvince,
+    selectedRegion
+  ]);
 
-  const handleProvinceChange = React.useCallback(
+  const handleProvinceChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
       const nextProvince = event.target.value;
       setSelectedProvince(nextProvince);
@@ -356,42 +393,294 @@ export default function HomePage() {
     []
   );
 
-  const handleRegionChange = React.useCallback(
+  const handleRegionChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
       setSelectedRegion(event.target.value);
     },
     []
   );
 
-  const handleClearRegion = React.useCallback(() => {
+  const handleClearRegion = useCallback(() => {
     setSelectedRegion("");
   }, []);
 
-  const handleClearProvince = React.useCallback(() => {
+  const handleClearProvince = useCallback(() => {
     setSelectedProvince("");
     setSelectedRegion("");
   }, []);
 
-  const handleRetry = React.useCallback(() => {
+  const handleRetry = useCallback(() => {
     void fetchMuseums();
   }, [fetchMuseums]);
+
+  const nearbyDescription = useMemo(() => {
+    if (!hasNearbyAttempt) {
+      return "위치 권한을 허용하면 내 주변 박물관을 바로 확인할 수 있습니다.";
+    }
+
+    if (isLocatingNearby) {
+      return "현재 위치를 확인하는 중입니다...";
+    }
+
+    if (isFetchingNearby && !hasNearbyResults) {
+      return `반경 ${nearbyRadius}km 내 박물관을 불러오는 중입니다...`;
+    }
+
+    if (isNearbyError && nearbyError) {
+      return nearbyError;
+    }
+
+    if ((nearbyMuseums?.length ?? 0) === 0) {
+      return "내 주변에서 박물관을 찾지 못했습니다.";
+    }
+
+    const formattedCount = nearbyTotalCount.toLocaleString();
+    const fallbackSuffix = usedFallback ? " (대체 계산)" : "";
+    return `내 위치 기준 반경 ${nearbyRadius}km 내에 ${formattedCount}개 기관이 있습니다${fallbackSuffix}.`;
+  }, [
+    hasNearbyAttempt,
+    hasNearbyResults,
+    isFetchingNearby,
+    isLocatingNearby,
+    isNearbyError,
+    nearbyError,
+    nearbyMuseums?.length,
+    nearbyRadius,
+    nearbyTotalCount,
+    usedFallback
+  ]);
+
+  const nearMeStatusMessage = useMemo(() => {
+    if (!hasNearbyAttempt) {
+      return "";
+    }
+
+    if (isLocatingNearby) {
+      return "현재 위치를 확인하는 중입니다.";
+    }
+
+    if (isFetchingNearby) {
+      return "주변 박물관을 불러오는 중입니다.";
+    }
+
+    if (isNearbyError && nearbyError) {
+      return nearbyError;
+    }
+
+    if ((nearbyMuseums?.length ?? 0) === 0) {
+      return "내 주변에서 박물관을 찾지 못했습니다.";
+    }
+
+    return usedFallback
+      ? "확장 기능 없이 대체 계산으로 결과를 제공합니다."
+      : "내 주변 검색이 완료되었습니다.";
+  }, [
+    hasNearbyAttempt,
+    isFetchingNearby,
+    isLocatingNearby,
+    isNearbyError,
+    nearbyError,
+    nearbyMuseums?.length,
+    usedFallback
+  ]);
+
+  const handleTopLevelTabChange = useCallback((value: string) => {
+    if (value === "regions" || value === "nearby" || value === "settings") {
+      setActiveTab(value);
+    }
+  }, []);
+
+  const beginNearbyRequest = useCallback(() => {
+    const nextRequestId = nearbyRequestIdRef.current + 1;
+    nearbyRequestIdRef.current = nextRequestId;
+    return nextRequestId;
+  }, []);
+
+  const fetchNearbyMuseums = useCallback(
+    async (location: GeoCoordinate, radius: number, requestId: number) => {
+      setNearbyState("fetching");
+      setNearbyError(null);
+
+      try {
+        const params = new URLSearchParams({
+          lat: location.latitude.toString(),
+          lon: location.longitude.toString(),
+          distanceKm: radius.toString()
+        });
+
+        const response = await fetch(`/api/museums/nearby?${params.toString()}`);
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              items?: Museum[];
+              totalCount?: number;
+              message?: string;
+              fallback?: boolean;
+            }
+          | null;
+
+        if (!response.ok || !payload) {
+          const message = payload?.message ?? "내 주변 기관을 불러오지 못했습니다.";
+          throw new Error(message);
+        }
+
+        const items = Array.isArray(payload.items) ? payload.items : [];
+
+        if (process.env.NODE_ENV !== "production") {
+          const logLabel = payload.fallback
+            ? "[nearby] Fallback distance calculation used"
+            : "[nearby] RPC distance calculation used";
+          console.info(logLabel, {
+            count: items.length,
+            radiusKm: radius
+          });
+        }
+
+        if (nearbyRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        setUsedFallback(Boolean(payload.fallback));
+        setNearbyMuseums(items);
+        setNearbyTotalCount(payload.totalCount ?? items.length);
+        setNearbyState("idle");
+      } catch (caughtError) {
+        if (nearbyRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        setNearbyState("error");
+        setNearbyError(
+          caughtError instanceof Error
+            ? caughtError.message
+            : "내 주변 기관을 불러오지 못했습니다."
+        );
+      }
+    },
+    []
+  );
+
+  const getLocationErrorMessage = useCallback((geoError: GeolocationPositionError) => {
+    if (geoError.code === geoError.PERMISSION_DENIED) {
+      return "위치 권한이 거부되었습니다. 브라우저 설정에서 위치 접근을 허용한 뒤 다시 시도하세요.";
+    }
+
+    if (geoError.code === geoError.TIMEOUT) {
+      return "위치 정보를 가져오는 데 시간이 초과되었습니다. 주변 환경을 확인하고 다시 시도하세요.";
+    }
+
+    return "위치 정보를 확인하지 못했습니다. 다시 시도해주세요.";
+  }, []);
+
+  const handleNearMeClick = useCallback(() => {
+    if (nearbyState === "locating" || nearbyState === "fetching") {
+      return;
+    }
+
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setNearbyState("error");
+      setNearbyError("현재 기기에서는 위치 정보를 사용할 수 없습니다.");
+      return;
+    }
+
+    const requestId = beginNearbyRequest();
+    setNearbyState("locating");
+    setNearbyError(null);
+    setUsedFallback(false);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextLocation: GeoCoordinate = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+
+        setUserLocation(nextLocation);
+        void fetchNearbyMuseums(nextLocation, nearbyRadius, requestId);
+      },
+      (geoError) => {
+        if (nearbyRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        setNearbyState("error");
+        setNearbyError(getLocationErrorMessage(geoError));
+      },
+      {
+        enableHighAccuracy: false,
+        maximumAge: 60_000,
+        timeout: 10_000
+      }
+    );
+  }, [beginNearbyRequest, fetchNearbyMuseums, getLocationErrorMessage, nearbyRadius, nearbyState]);
+
+  const handleNearMeKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleNearMeClick();
+      }
+    },
+    [handleNearMeClick]
+  );
+
+  const handleRadiusChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const nextRadius = Number(event.target.value);
+
+      if (!Number.isFinite(nextRadius)) {
+        return;
+      }
+
+      setNearbyRadius(nextRadius);
+
+      if (userLocation) {
+        const requestId = beginNearbyRequest();
+        void fetchNearbyMuseums(userLocation, nextRadius, requestId);
+      }
+    },
+    [beginNearbyRequest, fetchNearbyMuseums, userLocation]
+  );
+
+  const handleNearbyRetry = useCallback(() => {
+    if (userLocation) {
+      const requestId = beginNearbyRequest();
+      void fetchNearbyMuseums(userLocation, nearbyRadius, requestId);
+      return;
+    }
+
+    handleNearMeClick();
+  }, [beginNearbyRequest, fetchNearbyMuseums, handleNearMeClick, nearbyRadius, userLocation]);
+
+  const nearMeButtonLabel = useMemo(() => {
+    if (isLocatingNearby) {
+      return "위치 확인 중...";
+    }
+
+    if (isFetchingNearby) {
+      return "주변 검색 중...";
+    }
+
+    return hasNearbyAttempt ? "내 주변 다시 찾기" : "내 주변 박물관 찾기";
+  }, [hasNearbyAttempt, isFetchingNearby, isLocatingNearby]);
 
   return (
     <main className="flex min-h-screen flex-col bg-gradient-to-b from-background via-background to-muted/30">
       <section className="container grid gap-12 py-16">
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTopLevelTabChange} className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="regions">지역별 목록</TabsTrigger>
+            <TabsTrigger value="nearby">내 주변</TabsTrigger>
+            <TabsTrigger value="settings">설정</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="mt-6">
+          <TabsContent value="regions" className="mt-6">
             <Card>
-              <CardHeader>
-                <CardTitle>박물관 목록</CardTitle>
-                <CardDescription>{descriptionMessage}</CardDescription>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <CardHeader className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <CardTitle>지역별 박물관 목록</CardTitle>
+                </div>
+                <CardDescription aria-live="polite">{regionDescription}</CardDescription>
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <label
                       htmlFor="province-filter"
@@ -436,23 +725,25 @@ export default function HomePage() {
                       ))}
                     </select>
                   </div>
-                  {regionsLoading ? (
-                    <span className="text-xs text-muted-foreground">지역 정보를 불러오는 중...</span>
-                  ) : null}
-                  {regionsError ? (
-                    <span className="text-xs text-destructive">{regionsError}</span>
-                  ) : null}
-                  <div className="flex gap-2">
-                    {selectedProvince ? (
-                      <Button variant="ghost" size="sm" onClick={handleClearProvince}>
-                        광역시/도 해제
-                      </Button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {regionsLoading ? (
+                      <span className="text-xs text-muted-foreground">지역 정보를 불러오는 중...</span>
                     ) : null}
-                    {selectedRegion ? (
-                      <Button variant="ghost" size="sm" onClick={handleClearRegion}>
-                        지역 해제
-                      </Button>
+                    {regionsError ? (
+                      <span className="text-xs text-destructive">{regionsError}</span>
                     ) : null}
+                    <div className="flex gap-2">
+                      {selectedProvince ? (
+                        <Button variant="ghost" size="sm" onClick={handleClearProvince}>
+                          광역시/도 해제
+                        </Button>
+                      ) : null}
+                      {selectedRegion ? (
+                        <Button variant="ghost" size="sm" onClick={handleClearRegion}>
+                          지역 해제
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -462,50 +753,127 @@ export default function HomePage() {
                     <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
                       {error}
                     </p>
-                    <Button variant="outline" size="sm" onClick={handleRetry}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetry}
+                    >
                       다시 시도
                     </Button>
                   </div>
-                ) : isLoading ? (
+                ) : shouldShowRegionSkeleton ? (
                   <div className="space-y-3">
                     <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
                     <div className="h-32 w-full animate-pulse rounded-md bg-muted" />
                   </div>
                 ) : (
-                  <DataTable
-                    columns={columns}
-                    data={museums}
-                    searchKey="name"
-                    searchPlaceholder="박물관명으로 검색..."
-                  />
+                  <div aria-busy={regionTableBusy} className="relative">
+                    <DataTable
+                      columns={columns}
+                      data={museums}
+                      searchKey="name"
+                      searchPlaceholder="박물관명으로 검색..."
+                    />
+                  </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="analytics" className="mt-6">
-            <div className="space-y-6">
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle>Analytics Dashboard</CardTitle>
-                  <CardDescription>View detailed analytics and metrics.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Analytics content will be displayed here.</p>
-                </CardContent>
-              </Card>
-            </div>
+          <TabsContent value="nearby" className="mt-6">
+            <Card>
+              <CardHeader className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <CardTitle>내 주변 박물관 찾기</CardTitle>
+                  {nearMeStatusMessage ? (
+                    <p className="text-xs text-muted-foreground sm:text-sm" role="status" aria-live="polite">
+                      {nearMeStatusMessage}
+                    </p>
+                  ) : null}
+                </div>
+                <CardDescription aria-live="polite">{nearbyDescription}</CardDescription>
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      type="button"
+                      variant={hasNearbyResults ? "secondary" : "outline"}
+                      tabIndex={0}
+                      aria-pressed={hasNearbyAttempt}
+                      aria-label="내 주변 박물관 찾기"
+                      onClick={handleNearMeClick}
+                      onKeyDown={handleNearMeKeyDown}
+                      disabled={isLocatingNearby || isFetchingNearby}
+                      className="min-w-[12rem]"
+                    >
+                      {nearMeButtonLabel}
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="nearby-radius"
+                        className="text-sm font-medium text-muted-foreground"
+                      >
+                        검색 반경
+                      </label>
+                      <select
+                        id="nearby-radius"
+                        value={nearbyRadius}
+                        onChange={handleRadiusChange}
+                        className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        disabled={isLocatingNearby || isFetchingNearby}
+                      >
+                        {NEARBY_RADIUS_OPTIONS.map((radiusOption) => (
+                          <option key={radiusOption} value={radiusOption}>
+                            {radiusOption}km
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {nearbyError ? (
+                  <div className="space-y-3">
+                    <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                      {nearbyError}
+                    </p>
+                    <Button variant="outline" size="sm" onClick={handleNearbyRetry}>
+                      다시 시도
+                    </Button>
+                  </div>
+                ) : shouldShowNearbySkeleton ? (
+                  <div className="space-y-3">
+                    <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+                    <div className="h-32 w-full animate-pulse rounded-md bg-muted" />
+                  </div>
+                ) : (
+                  <div aria-busy={nearbyTableBusy} className="relative">
+                    <DataTable
+                      columns={nearbyColumns}
+                      data={nearbyMuseums ?? []}
+                      searchKey="name"
+                      searchPlaceholder="박물관명으로 검색..."
+                    />
+                  </div>
+                )}
+                {usedFallback ? (
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    정확도를 높이기 위해 서버 확장 기능 없이 대체 계산을 사용했습니다.
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
           </TabsContent>
-          
+
           <TabsContent value="settings" className="mt-6">
             <div className="space-y-6">
               <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle>Settings</CardTitle>
-                  <CardDescription>Manage your application settings.</CardDescription>
+                  <CardTitle>설정</CardTitle>
+                  <CardDescription>애플리케이션 환경 설정을 관리하세요.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">Settings content will be displayed here.</p>
+                  <p className="text-muted-foreground">설정 페이지는 추후에 구성될 예정입니다.</p>
                 </CardContent>
               </Card>
             </div>
