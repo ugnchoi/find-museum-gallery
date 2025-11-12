@@ -29,6 +29,11 @@ type NearbyResponse = {
   fallback?: boolean;
 };
 
+type FallbackRow = Record<string, any> & {
+  latitude: number | string | null;
+  longitude: number | string | null;
+};
+
 const RESPONSE_HEADERS = {
   "Cache-Control": "no-store"
 };
@@ -214,13 +219,13 @@ export async function GET(request: Request) {
       throw fallbackError;
     }
 
-    const fallbackRows = Array.isArray(fallbackData) ? fallbackData : [];
-    type FallbackRow = Record<string, any> & {
-      latitude: number | string | null;
-      longitude: number | string | null;
-    };
+    if (!Array.isArray(fallbackData)) {
+      throw new Error("Fallback data is not an array");
+    }
 
-    const items = (fallbackRows as FallbackRow[])
+    const fallbackRows = fallbackData as unknown as FallbackRow[];
+
+    const items = fallbackRows
       .map((row) => {
         const museumLatitude = Number(row.latitude);
         const museumLongitude = Number(row.longitude);
