@@ -11,7 +11,7 @@ const DEFAULT_PAGE_SIZE = 50;
 const MIN_PAGE = 1;
 const MAX_PAGE = 1000;
 const MIN_PAGE_SIZE = 1;
-const MAX_PAGE_SIZE = 200;
+const MAX_PAGE_SIZE = 500;
 const TABLE_NAME = "museum-gallery-db";
 
 export async function GET(request: Request) {

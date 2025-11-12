@@ -50,6 +50,8 @@ export const normalizeMuseum = (row: Record<string, any>): Museum => {
     regionSlug: regionRecord?.slug ?? undefined,
     provinceName: parentRecord?.name ?? regionRecord?.name ?? undefined,
     provinceSlug: parentRecord?.slug ?? regionRecord?.slug ?? undefined,
+    "address_street": addressRoad,
+    "address_jb": addressLot,
     address: addressRoad,
     lotAddress: addressLot,
     facilityType,

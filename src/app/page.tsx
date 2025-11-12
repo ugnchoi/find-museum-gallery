@@ -1,13 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Map } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
+import { AlertCircle } from "lucide-react";
 import { type GeoCoordinate } from "@/lib/geo";
 import { type Museum } from "@/types/museum";
 
@@ -85,20 +97,56 @@ const columns: ColumnDef<Museum>[] = [
     },
   },
   {
-    id: "coordinates",
-    header: () => <span className="text-sm font-medium text-muted-foreground">위도 / 경도</span>,
+    id: "map",
+    header: () => <span className="text-sm font-medium text-muted-foreground">지도에서 보기</span>,
     cell: ({ row }) => {
-      const { latitude, longitude } = row.original;
+      const museum = row.original;
+      const primaryAddress = museum["address_street"]?.trim() ?? "";
+      const secondaryAddress = museum["address_jb"]?.trim() ?? "";
+      const fallbackAddress = museum.address?.trim() ?? "";
+      const searchAddress = primaryAddress || secondaryAddress || fallbackAddress;
+
+      if (!searchAddress) {
+        return (
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled
+            aria-label={`${museum.name} 지도 주소가 없습니다.`}
+            tabIndex={0}
+          >
+            <Map className="h-4 w-4" />
+          </Button>
+        );
+      }
+
+      const searchUrl = `https://map.naver.com/p/search/${encodeURIComponent(searchAddress)}`;
+
+      const handleClick = () => {
+        window.open(searchUrl, "_blank", "noopener,noreferrer");
+      };
+
+      const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        event.preventDefault();
+        window.open(searchUrl, "_blank", "noopener,noreferrer");
+      };
 
       return (
-        <div className="space-y-1 text-sm">
-          <p className="font-medium text-foreground">
-            {latitude ? Number(latitude).toFixed(6) : "-"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {longitude ? Number(longitude).toFixed(6) : "-"}
-          </p>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleClick}
+          onKeyDown={handleKeyDown}
+          aria-label={`${museum.name} 지도에서 보기`}
+          tabIndex={0}
+          type="button"
+        >
+          <Map className="h-4 w-4" />
+        </Button>
       );
     }
   }
@@ -194,7 +242,7 @@ export default function HomePage() {
       try {
         const params = new URLSearchParams({
           page: "1",
-          size: "100"
+          size: "500"
         });
 
         if (selectedProvince) {
@@ -384,21 +432,16 @@ export default function HomePage() {
     selectedRegion
   ]);
 
-  const handleProvinceChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      const nextProvince = event.target.value;
-      setSelectedProvince(nextProvince);
-      setSelectedRegion("");
-    },
-    []
-  );
+  const handleProvinceChange = useCallback((value: string) => {
+    const nextProvince = value === "all" ? "" : value;
+    setSelectedProvince(nextProvince);
+    setSelectedRegion("");
+  }, []);
 
-  const handleRegionChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setSelectedRegion(event.target.value);
-    },
-    []
-  );
+  const handleRegionChange = useCallback((value: string) => {
+    const nextRegion = value === "all" ? "" : value;
+    setSelectedRegion(nextRegion);
+  }, []);
 
   const handleClearRegion = useCallback(() => {
     setSelectedRegion("");
@@ -624,8 +667,8 @@ export default function HomePage() {
   );
 
   const handleRadiusChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      const nextRadius = Number(event.target.value);
+    (value: string) => {
+      const nextRadius = Number(value);
 
       if (!Number.isFinite(nextRadius)) {
         return;
@@ -682,48 +725,60 @@ export default function HomePage() {
                 <CardDescription aria-live="polite">{regionDescription}</CardDescription>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <label
-                      htmlFor="province-filter"
-                      className="text-sm font-medium text-muted-foreground"
-                    >
+                    <Label htmlFor="province-filter" className="text-sm font-medium text-muted-foreground">
                       광역시/도 선택
-                    </label>
-                    <select
-                      id="province-filter"
-                      value={selectedProvince}
-                      onChange={handleProvinceChange}
-                      className="h-10 min-w-[12rem] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    </Label>
+                    <Select
+                      value={selectedProvince || "all"}
+                      onValueChange={handleProvinceChange}
                       disabled={regionsLoading}
                     >
-                      <option value="">전체</option>
-                      {provinces.map((province) => (
-                        <option key={province.id} value={province.slug}>
-                          {formatProvinceLabel(province)} ({province.count})
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="province-filter" className="min-w-[12rem]">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체</SelectItem>
+                        {provinces.map((province) => (
+                          <SelectItem key={province.id} value={province.slug}>
+                            <span className="flex items-center gap-2">
+                              <span>{formatProvinceLabel(province)}</span>
+                              <Badge variant="secondary" className="ml-auto">
+                                {province.count}
+                              </Badge>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <label
-                      htmlFor="region-filter"
-                      className="text-sm font-medium text-muted-foreground"
-                    >
+                    <Label htmlFor="region-filter" className="text-sm font-medium text-muted-foreground">
                       지역 선택
-                    </label>
-                    <select
-                      id="region-filter"
-                      value={selectedRegion}
-                      onChange={handleRegionChange}
-                      className="h-10 min-w-[12rem] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    </Label>
+                    <Select
+                      value={selectedRegion || "all"}
+                      onValueChange={handleRegionChange}
                       disabled={regionsLoading || !selectedProvince}
                     >
-                      <option value="">{selectedProvince ? "전체" : "광역시/도를 먼저 선택하세요"}</option>
-                      {filteredRegions.map((region) => (
-                        <option key={region.id} value={region.slug}>
-                          {formatRegionLabel(region)} ({region.count})
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="region-filter" className="min-w-[12rem]">
+                        <SelectValue
+                          placeholder={selectedProvince ? "전체" : "광역시/도를 먼저 선택하세요"}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체</SelectItem>
+                        {filteredRegions.map((region) => (
+                          <SelectItem key={region.id} value={region.slug}>
+                            <span className="flex items-center gap-2">
+                              <span>{formatRegionLabel(region)}</span>
+                              <Badge variant="secondary" className="ml-auto">
+                                {region.count}
+                              </Badge>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                     {regionsLoading ? (
@@ -750,21 +805,18 @@ export default function HomePage() {
               <CardContent>
                 {error ? (
                   <div className="space-y-3">
-                    <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                      {error}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRetry}
-                    >
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                    <Button variant="outline" size="sm" onClick={handleRetry}>
                       다시 시도
                     </Button>
                   </div>
                 ) : shouldShowRegionSkeleton ? (
                   <div className="space-y-3">
-                    <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
-                    <div className="h-32 w-full animate-pulse rounded-md bg-muted" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-32 w-full" />
                   </div>
                 ) : (
                   <div aria-busy={regionTableBusy} className="relative">
@@ -808,25 +860,25 @@ export default function HomePage() {
                       {nearMeButtonLabel}
                     </Button>
                     <div className="flex items-center gap-2">
-                      <label
-                        htmlFor="nearby-radius"
-                        className="text-sm font-medium text-muted-foreground"
-                      >
+                      <Label htmlFor="nearby-radius" className="text-sm font-medium text-muted-foreground">
                         검색 반경
-                      </label>
-                      <select
-                        id="nearby-radius"
-                        value={nearbyRadius}
-                        onChange={handleRadiusChange}
-                        className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      </Label>
+                      <Select
+                        value={nearbyRadius.toString()}
+                        onValueChange={handleRadiusChange}
                         disabled={isLocatingNearby || isFetchingNearby}
                       >
-                        {NEARBY_RADIUS_OPTIONS.map((radiusOption) => (
-                          <option key={radiusOption} value={radiusOption}>
-                            {radiusOption}km
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger id="nearby-radius" className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {NEARBY_RADIUS_OPTIONS.map((radiusOption) => (
+                            <SelectItem key={radiusOption} value={radiusOption.toString()}>
+                              {radiusOption}km
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </div>
@@ -834,17 +886,18 @@ export default function HomePage() {
               <CardContent>
                 {nearbyError ? (
                   <div className="space-y-3">
-                    <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                      {nearbyError}
-                    </p>
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{nearbyError}</AlertDescription>
+                    </Alert>
                     <Button variant="outline" size="sm" onClick={handleNearbyRetry}>
                       다시 시도
                     </Button>
                   </div>
                 ) : shouldShowNearbySkeleton ? (
                   <div className="space-y-3">
-                    <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
-                    <div className="h-32 w-full animate-pulse rounded-md bg-muted" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-32 w-full" />
                   </div>
                 ) : (
                   <div aria-busy={nearbyTableBusy} className="relative">
@@ -857,9 +910,12 @@ export default function HomePage() {
                   </div>
                 )}
                 {usedFallback ? (
-                  <p className="mt-4 text-xs text-muted-foreground">
-                    정확도를 높이기 위해 서버 확장 기능 없이 대체 계산을 사용했습니다.
-                  </p>
+                  <Alert className="mt-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      정확도를 높이기 위해 서버 확장 기능 없이 대체 계산을 사용했습니다.
+                    </AlertDescription>
+                  </Alert>
                 ) : null}
               </CardContent>
             </Card>
