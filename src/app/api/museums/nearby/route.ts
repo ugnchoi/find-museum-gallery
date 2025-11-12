@@ -215,8 +215,12 @@ export async function GET(request: Request) {
     }
 
     const fallbackRows = Array.isArray(fallbackData) ? fallbackData : [];
+    type FallbackRow = Record<string, any> & {
+      latitude: number | string | null;
+      longitude: number | string | null;
+    };
 
-    const items = fallbackRows
+    const items = (fallbackRows as FallbackRow[])
       .map((row) => {
         const museumLatitude = Number(row.latitude);
         const museumLongitude = Number(row.longitude);
