@@ -1,0 +1,21 @@
+export type Museum = {
+  id: string;
+  name: string;
+  region: string;
+  regionId?: string;
+  regionSlug?: string;
+  provinceName?: string;
+  provinceSlug?: string;
+  address: string;
+  lotAddress: string;
+  facilityType: string;
+  phoneNumber: string;
+  organizationName: string;
+  homepageUrl: string;
+  description: string;
+  transportInfo: string;
+  referenceDate: string;
+  latitude: string;
+  longitude: string;
+  distanceKm?: string;
+};

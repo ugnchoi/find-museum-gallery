@@ -1,0 +1,69 @@
+{
+  "overrides": {
+    "서울": {
+      "parentName": "서울특별시",
+      "parentSlug": "seoul",
+      "childName": "서울특별시",
+      "childSlug": "seoul"
+    },
+    "서울특별시": {
+      "parentName": "서울특별시",
+      "parentSlug": "seoul",
+      "childName": "서울특별시",
+      "childSlug": "seoul"
+    },
+    "서울특별시 용산구": {
+      "parentSlug": "seoul",
+      "childSlug": "seoul-yongsan-gu"
+    },
+    "강원특별자치도": {
+      "parentName": "강원특별자치도",
+      "parentSlug": "gangwon-special-self-governing-province",
+      "childName": "강원특별자치도",
+      "childSlug": "gangwon-special-self-governing-province"
+    },
+    "강원특별자치도양구군": {
+      "parentName": "강원특별자치도",
+      "parentSlug": "gangwon-special-self-governing-province",
+      "childName": "강원특별자치도",
+      "childSlug": "gangwon-special-self-governing-province"
+    },
+    "충북": {
+      "parentName": "충청북도",
+      "parentSlug": "chungcheongbuk-do",
+      "childName": "충청북도",
+      "childSlug": "chungcheongbuk-do"
+    },
+    "충청북도": {
+      "parentName": "충청북도",
+      "parentSlug": "chungcheongbuk-do",
+      "childName": "충청북도",
+      "childSlug": "chungcheongbuk-do"
+    },
+    "전랴북도": {
+      "parentName": "전북특별자치도",
+      "parentSlug": "jeonbuk-special-self-governing-province",
+      "childName": "전북특별자치도",
+      "childSlug": "jeonbuk-special-self-governing-province"
+    },
+    "전북특별자치도": {
+      "parentName": "전북특별자치도",
+      "parentSlug": "jeonbuk-special-self-governing-province",
+      "childName": "전북특별자치도",
+      "childSlug": "jeonbuk-special-self-governing-province"
+    },
+    "세종특별시": {
+      "parentName": "세종특별자치시",
+      "parentSlug": "sejong-special-self-governing-city",
+      "childName": "세종특별자치시",
+      "childSlug": "sejong-special-self-governing-city"
+    },
+    "세종특별자치시": {
+      "parentName": "세종특별자치시",
+      "parentSlug": "sejong-special-self-governing-city",
+      "childName": "세종특별자치시",
+      "childSlug": "sejong-special-self-governing-city"
+    }
+  },
+  "unmappedExamples": []
+}
