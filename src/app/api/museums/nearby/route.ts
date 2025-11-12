@@ -29,9 +29,34 @@ type NearbyResponse = {
   fallback?: boolean;
 };
 
-type FallbackRow = Record<string, any> & {
+type FallbackRow = {
+  id: string | number;
+  facil_name: string | null;
+  address_road: string | null;
+  address_jb: string | null;
   latitude: number | string | null;
   longitude: number | string | null;
+  type: string | null;
+  provider_code: string | null;
+  phone: string | null;
+  org_name: string | null;
+  org_site: string | null;
+  transportation: string | null;
+  facil_intro: string | null;
+  admin_org_phone: string | null;
+  admin_org: string | null;
+  data_update_date: string | null;
+  region_id: string | null;
+  [column: string]: unknown;
+};
+const isFallbackRow = (value: unknown): value is FallbackRow => {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return "latitude" in record && "longitude" in record;
 };
 
 const RESPONSE_HEADERS = {
@@ -219,11 +244,8 @@ export async function GET(request: Request) {
       throw fallbackError;
     }
 
-    if (!Array.isArray(fallbackData)) {
-      throw new Error("Fallback data is not an array");
-    }
-
-    const fallbackRows = fallbackData as unknown as FallbackRow[];
+    const fallbackRowCandidates: unknown[] = Array.isArray(fallbackData) ? fallbackData : [];
+    const fallbackRows = fallbackRowCandidates.filter(isFallbackRow);
 
     const items = fallbackRows
       .map((row) => {
