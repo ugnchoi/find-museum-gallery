@@ -6,6 +6,8 @@ export type Museum = {
   regionSlug?: string;
   provinceName?: string;
   provinceSlug?: string;
+  "address_street"?: string;
+  "address_jb"?: string;
   address: string;
   lotAddress: string;
   facilityType: string;

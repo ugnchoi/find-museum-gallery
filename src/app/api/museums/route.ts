@@ -8,6 +8,10 @@ export const dynamic = "force-dynamic";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 50;
+const MIN_PAGE = 1;
+const MAX_PAGE = 1000;
+const MIN_PAGE_SIZE = 1;
+const MAX_PAGE_SIZE = 500;
 const TABLE_NAME = "museum-gallery-db";
 
 export async function GET(request: Request) {
@@ -41,9 +45,28 @@ export async function GET(request: Request) {
     return nameLookup.data?.id ?? null;
   };
 
+  const clamp = (value: number, minimum: number, maximum: number) =>
+    Math.min(Math.max(value, minimum), maximum);
+
+  const parsePositiveInteger = (value: string | null, fallback: number) => {
+    if (!value) {
+      return fallback;
+    }
+
+    const parsed = Number(value);
+
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return fallback;
+    }
+
+    return Math.floor(parsed);
+  };
+
   const { searchParams } = new URL(request.url);
-  const pageParam = Number(searchParams.get("page")) || DEFAULT_PAGE;
-  const sizeParam = Number(searchParams.get("size")) || DEFAULT_PAGE_SIZE;
+  const rawPage = parsePositiveInteger(searchParams.get("page"), DEFAULT_PAGE);
+  const rawSize = parsePositiveInteger(searchParams.get("size"), DEFAULT_PAGE_SIZE);
+  const pageParam = clamp(rawPage, MIN_PAGE, MAX_PAGE);
+  const sizeParam = clamp(rawSize, MIN_PAGE_SIZE, MAX_PAGE_SIZE);
   const keyword = searchParams.get("keyword")?.trim();
   const regionParam = searchParams.get("region")?.trim();
   const provinceParam = searchParams.get("province")?.trim();

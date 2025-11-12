@@ -234,6 +234,10 @@ export async function GET(request: Request) {
           return null;
         }
 
+        if (distanceKm > radiusKm) {
+          return null;
+        }
+
         return normalizeMuseum({
           ...row,
           distance_km: distanceKm
