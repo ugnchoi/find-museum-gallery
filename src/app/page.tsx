@@ -5,7 +5,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Globe, Map } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -733,12 +732,14 @@ export default function HomePage() {
           </TabsList>
           
           <TabsContent value="regions" className="mt-6">
-            <Card>
-              <CardHeader className="space-y-4">
+            <div className="space-y-6">
+              <div className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <CardTitle>지역별 박물관 목록</CardTitle>
+                  <h2 className="text-2xl font-semibold tracking-tight text-foreground">지역별 박물관 목록</h2>
                 </div>
-                <CardDescription aria-live="polite">{regionDescription}</CardDescription>
+                <p aria-live="polite" className="text-sm text-muted-foreground">
+                  {regionDescription}
+                </p>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <Label htmlFor="province-filter" className="text-sm font-medium text-muted-foreground">
@@ -817,49 +818,49 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {error ? (
-                  <div className="space-y-3">
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                    <Button variant="outline" size="sm" onClick={handleRetry}>
-                      다시 시도
-                    </Button>
-                  </div>
-                ) : shouldShowRegionSkeleton ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-32 w-full" />
-                  </div>
-                ) : (
-                  <div aria-busy={regionTableBusy} className="relative">
-                    <DataTable
-                      columns={columns}
-                      data={museums}
-                      searchKey="name"
-                      searchPlaceholder="박물관명으로 검색..."
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              </div>
+              {error ? (
+                <div className="space-y-3">
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                  <Button variant="outline" size="sm" onClick={handleRetry}>
+                    다시 시도
+                  </Button>
+                </div>
+              ) : shouldShowRegionSkeleton ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-32 w-full" />
+                </div>
+              ) : (
+                <div aria-busy={regionTableBusy} className="relative">
+                  <DataTable
+                    columns={columns}
+                    data={museums}
+                    searchKey="name"
+                    searchPlaceholder="박물관명으로 검색..."
+                  />
+                </div>
+              )}
+            </div>
           </TabsContent>
           
           <TabsContent value="nearby" className="mt-6">
-            <Card>
-              <CardHeader className="space-y-4">
+            <div className="space-y-6">
+              <div className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <CardTitle>내 주변 박물관 찾기</CardTitle>
+                  <h2 className="text-2xl font-semibold tracking-tight text-foreground">내 주변 박물관 찾기</h2>
                   {nearMeStatusMessage ? (
                     <p className="text-xs text-muted-foreground sm:text-sm" role="status" aria-live="polite">
                       {nearMeStatusMessage}
                     </p>
                   ) : null}
                 </div>
-                <CardDescription aria-live="polite">{nearbyDescription}</CardDescription>
+                <p aria-live="polite" className="text-sm text-muted-foreground">
+                  {nearbyDescription}
+                </p>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex flex-wrap items-center gap-3">
                     <Button
@@ -898,56 +899,48 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {nearbyError ? (
-                  <div className="space-y-3">
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{nearbyError}</AlertDescription>
-                    </Alert>
-                    <Button variant="outline" size="sm" onClick={handleNearbyRetry}>
-                      다시 시도
-                    </Button>
-                  </div>
-                ) : shouldShowNearbySkeleton ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-32 w-full" />
-                  </div>
-                ) : (
-                  <div aria-busy={nearbyTableBusy} className="relative">
-                    <DataTable
-                      columns={nearbyColumns}
-                      data={nearbyMuseums ?? []}
-                      searchKey="name"
-                      searchPlaceholder="박물관명으로 검색..."
-                    />
-                  </div>
-                )}
-                {usedFallback ? (
-                  <Alert className="mt-4">
+              </div>
+              {nearbyError ? (
+                <div className="space-y-3">
+                  <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="text-xs">
-                      정확도를 높이기 위해 서버 확장 기능 없이 대체 계산을 사용했습니다.
-                    </AlertDescription>
+                    <AlertDescription>{nearbyError}</AlertDescription>
                   </Alert>
-                ) : null}
-              </CardContent>
-            </Card>
+                  <Button variant="outline" size="sm" onClick={handleNearbyRetry}>
+                    다시 시도
+                  </Button>
+                </div>
+              ) : shouldShowNearbySkeleton ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-32 w-full" />
+                </div>
+              ) : (
+                <div aria-busy={nearbyTableBusy} className="relative">
+                  <DataTable
+                    columns={nearbyColumns}
+                    data={nearbyMuseums ?? []}
+                    searchKey="name"
+                    searchPlaceholder="박물관명으로 검색..."
+                  />
+                </div>
+              )}
+              {usedFallback ? (
+                <Alert className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    정확도를 높이기 위해 서버 확장 기능 없이 대체 계산을 사용했습니다.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+            </div>
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
-            <div className="space-y-6">
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle>설정</CardTitle>
-                  <CardDescription>애플리케이션 환경 설정을 관리하세요.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">설정 페이지는 추후에 구성될 예정입니다.</p>
-                </CardContent>
-              </Card>
+            <div className="space-y-3">
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground">설정</h2>
+              <p className="text-sm text-muted-foreground">애플리케이션 환경 설정을 관리하세요.</p>
+              <p className="text-muted-foreground">설정 페이지는 추후에 구성될 예정입니다.</p>
             </div>
           </TabsContent>
         </Tabs>
