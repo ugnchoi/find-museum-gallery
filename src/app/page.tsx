@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Map } from "lucide-react";
+import { ArrowUpDown, Globe, Map } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,6 +67,50 @@ const columns: ColumnDef<Museum>[] = [
         </div>
       );
     },
+  },
+  {
+    id: "website",
+    header: () => <span className="text-sm font-medium text-muted-foreground">웹사이트</span>,
+    cell: ({ row }) => {
+      const museum = row.original;
+      const rawHomepage = museum.homepageUrl?.trim() ?? "";
+
+      if (!rawHomepage) {
+        return null;
+      }
+
+      const formattedUrl =
+        rawHomepage.startsWith("http://") || rawHomepage.startsWith("https://")
+          ? rawHomepage
+          : `https://${rawHomepage}`;
+
+      const handleClick = () => {
+        window.open(formattedUrl, "_blank", "noopener,noreferrer");
+      };
+
+      const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        event.preventDefault();
+        window.open(formattedUrl, "_blank", "noopener,noreferrer");
+      };
+
+      return (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleClick}
+          onKeyDown={handleKeyDown}
+          aria-label={`${museum.name} 웹사이트 열기`}
+          tabIndex={0}
+          type="button"
+        >
+          <Globe className="h-4 w-4" />
+        </Button>
+      );
+    }
   },
   {
     id: "map",
