@@ -15,9 +15,9 @@ const MAX_PAGE_SIZE = 500;
 const TABLE_NAME = "museum-gallery-db";
 
 export async function GET(request: Request) {
-  const supabase = supabaseServer();
-
   const resolveRegionId = async (value: string | null): Promise<string | null> => {
+    const supabase = supabaseServer();
+
     if (!value) {
       return null;
     }
@@ -75,6 +75,7 @@ export async function GET(request: Request) {
   const to = from + sizeParam - 1;
 
   try {
+    const supabase = supabaseServer();
     let targetedRegionIds: string[] | null = null;
 
     if (regionParam) {
@@ -195,9 +196,10 @@ export async function GET(request: Request) {
       items
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Supabase 쿼리 중 알 수 없는 오류가 발생했습니다.";
-
-    return NextResponse.json({ message }, { status: 500 });
+    console.error("[api.museums] Failed to load museums.", error);
+    return NextResponse.json(
+      { message: "박물관 정보를 불러오지 못했습니다." },
+      { status: 500 }
+    );
   }
 }

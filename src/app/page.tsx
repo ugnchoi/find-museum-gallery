@@ -199,7 +199,7 @@ type NearbyState = "idle" | "locating" | "fetching" | "error";
 const NEARBY_RADIUS_OPTIONS = [10, 25, 50];
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<"regions" | "nearby" | "settings">("regions");
+  const [activeTab, setActiveTab] = useState<"regions" | "nearby">("regions");
   const [museums, setMuseums] = useState<Museum[]>([]);
   const [regionTotalCount, setRegionTotalCount] = useState(0);
   const [nearbyTotalCount, setNearbyTotalCount] = useState(0);
@@ -543,7 +543,7 @@ export default function HomePage() {
   ]);
 
   const handleTopLevelTabChange = useCallback((value: string) => {
-    if (value === "regions" || value === "nearby" || value === "settings") {
+    if (value === "regions" || value === "nearby") {
       setActiveTab(value);
     }
   }, []);
@@ -725,10 +725,9 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col bg-gradient-to-b from-background via-background to-muted/30">
       <section className="container grid gap-12 py-16">
         <Tabs value={activeTab} onValueChange={handleTopLevelTabChange} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="regions">지역별 목록</TabsTrigger>
             <TabsTrigger value="nearby">내 주변</TabsTrigger>
-            <TabsTrigger value="settings">설정</TabsTrigger>
           </TabsList>
           
           <TabsContent value="regions" className="mt-6">
@@ -933,14 +932,6 @@ export default function HomePage() {
                   </AlertDescription>
                 </Alert>
               ) : null}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="settings" className="mt-6">
-            <div className="space-y-3">
-              <h2 className="text-2xl font-semibold tracking-tight text-foreground">설정</h2>
-              <p className="text-sm text-muted-foreground">애플리케이션 환경 설정을 관리하세요.</p>
-              <p className="text-muted-foreground">설정 페이지는 추후에 구성될 예정입니다.</p>
             </div>
           </TabsContent>
         </Tabs>

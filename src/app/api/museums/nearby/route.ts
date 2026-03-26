@@ -234,6 +234,8 @@ export async function GET(request: Request) {
       .select(FALLBACK_SELECT_COLUMNS)
       .not("latitude", "is", null)
       .not("longitude", "is", null)
+      .neq("latitude", "")
+      .neq("longitude", "")
       .gte("latitude", boundingBox.minLatitude)
       .lte("latitude", boundingBox.maxLatitude)
       .gte("longitude", boundingBox.minLongitude)
@@ -249,6 +251,14 @@ export async function GET(request: Request) {
 
     const items = fallbackRows
       .map((row) => {
+        if (typeof row.latitude === "string" && row.latitude.trim() === "") {
+          return null;
+        }
+
+        if (typeof row.longitude === "string" && row.longitude.trim() === "") {
+          return null;
+        }
+
         const museumLatitude = Number(row.latitude);
         const museumLongitude = Number(row.longitude);
 
@@ -286,10 +296,8 @@ export async function GET(request: Request) {
       fallback: true
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "인근 박물관을 조회하는 중 알 수 없는 오류가 발생했습니다.";
-
-    return buildErrorResponse(message, 500);
+    console.error("[api.museums.nearby] Failed to load nearby museums.", error);
+    return buildErrorResponse("인근 박물관을 조회하는 중 오류가 발생했습니다.", 500);
   }
 }
 

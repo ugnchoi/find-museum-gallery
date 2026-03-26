@@ -72,6 +72,8 @@ export function DataTable<TData, TValue>({
       {searchKey && (
         <div className="flex items-center">
           <Input
+            aria-label={searchPlaceholder}
+            type="search"
             placeholder={searchPlaceholder}
             value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
             onChange={(event) =>

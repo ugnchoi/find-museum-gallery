@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { supabaseServer } from "@/lib/supabase-server";
 
+export const dynamic = "force-dynamic";
+
 const MUSEUM_TABLE = "museum-gallery-db";
 
 type RegionRow = {
@@ -28,9 +30,8 @@ type RegionCountRow = {
 };
 
 export async function GET() {
-  const supabase = supabaseServer();
-
   try {
+    const supabase = supabaseServer();
     const [childResult, parentResult] = await Promise.all([
       supabase
         .from("regions")
@@ -62,6 +63,7 @@ export async function GET() {
       const { data, error } = await supabase
         .from(MUSEUM_TABLE)
         .select("region_id")
+        .order("region_id", { ascending: true })
         .range(offset, offset + PAGE_SIZE - 1);
 
       if (error) {
@@ -136,9 +138,10 @@ export async function GET() {
       }
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Supabase 쿼리 중 알 수 없는 오류가 발생했습니다.";
-
-    return NextResponse.json({ message }, { status: 500 });
+    console.error("[api.regions] Failed to load regions summary.", error);
+    return NextResponse.json(
+      { message: "지역 정보를 불러오지 못했습니다." },
+      { status: 500 }
+    );
   }
 }
