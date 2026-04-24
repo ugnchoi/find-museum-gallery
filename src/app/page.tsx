@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Globe, Map } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -18,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Compass, LandPlot, MapPin, Sparkles } from "lucide-react";
 import { type GeoCoordinate } from "@/lib/geo";
 import { type Museum } from "@/types/museum";
 
@@ -722,34 +723,73 @@ export default function HomePage() {
   }, [hasNearbyAttempt, isFetchingNearby, isLocatingNearby]);
 
   return (
-    <main className="flex min-h-screen flex-col bg-gradient-to-b from-background via-background to-muted/30">
-      <section className="container grid gap-12 py-16">
-        <Tabs value={activeTab} onValueChange={handleTopLevelTabChange} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="regions">지역별 목록</TabsTrigger>
-            <TabsTrigger value="nearby">내 주변</TabsTrigger>
+    <main className="flex min-h-screen flex-col bg-background">
+      <section className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-accent/10 via-background to-background">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-24 h-64 bg-[radial-gradient(60%_60%_at_50%_0%,hsl(var(--accent)/0.18),transparent_70%)]"
+        />
+        <div className="container relative py-14 sm:py-20 lg:py-24">
+          <div className="max-w-2xl animate-fade-in-up space-y-5">
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-accent-foreground">
+              <Sparkles className="h-3.5 w-3.5 text-accent" aria-hidden />
+              가족을 위한 문화 나들이
+            </span>
+            <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              아이와 함께 떠나는
+              <br />
+              <span className="text-accent">문화 나들이</span>
+            </h1>
+            <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
+              내 주변의 박물관과 갤러리를 찾아, 오늘의 나들이를 계획해보세요.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="container grid gap-8 py-10 sm:py-14">
+        <Tabs value={activeTab} onValueChange={handleTopLevelTabChange} className="w-full space-y-8">
+          <TabsList className="inline-flex h-auto w-auto gap-1 rounded-full border border-border/70 bg-card/70 p-1 shadow-sm backdrop-blur">
+            <TabsTrigger
+              value="regions"
+              className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+            >
+              <LandPlot className="h-4 w-4" aria-hidden />
+              지역별 목록
+            </TabsTrigger>
+            <TabsTrigger
+              value="nearby"
+              className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+            >
+              <Compass className="h-4 w-4" aria-hidden />
+              내 주변
+            </TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="regions" className="mt-6">
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-2xl font-semibold tracking-tight text-foreground">지역별 박물관 목록</h2>
+
+          <TabsContent value="regions" className="animate-fade-in-up space-y-6">
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="space-y-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="font-display text-2xl font-semibold tracking-tight">
+                      지역별 박물관 목록
+                    </CardTitle>
+                    <CardDescription aria-live="polite">{regionDescription}</CardDescription>
+                  </div>
                 </div>
-                <p aria-live="polite" className="text-sm text-muted-foreground">
-                  {regionDescription}
-                </p>
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <Label htmlFor="province-filter" className="text-sm font-medium text-muted-foreground">
-                      광역시/도 선택
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="province-filter" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      광역시/도
                     </Label>
                     <Select
                       value={selectedProvince || "all"}
                       onValueChange={handleProvinceChange}
                       disabled={regionsLoading}
                     >
-                      <SelectTrigger id="province-filter" className="min-w-[12rem]">
+                      <SelectTrigger id="province-filter" className="w-full">
                         <SelectValue placeholder="전체" />
                       </SelectTrigger>
                       <SelectContent>
@@ -767,16 +807,16 @@ export default function HomePage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <Label htmlFor="region-filter" className="text-sm font-medium text-muted-foreground">
-                      지역 선택
+                  <div className="space-y-2">
+                    <Label htmlFor="region-filter" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      지역
                     </Label>
                     <Select
                       value={selectedRegion || "all"}
                       onValueChange={handleRegionChange}
                       disabled={regionsLoading || !selectedProvince}
                     >
-                      <SelectTrigger id="region-filter" className="min-w-[12rem]">
+                      <SelectTrigger id="region-filter" className="w-full">
                         <SelectValue
                           placeholder={selectedProvince ? "전체" : "광역시/도를 먼저 선택하세요"}
                         />
@@ -796,143 +836,153 @@ export default function HomePage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    {regionsLoading ? (
-                      <span className="text-xs text-muted-foreground">지역 정보를 불러오는 중...</span>
-                    ) : null}
-                    {regionsError ? (
-                      <span className="text-xs text-destructive">{regionsError}</span>
-                    ) : null}
-                    <div className="flex gap-2">
-                      {selectedProvince ? (
-                        <Button variant="ghost" size="sm" onClick={handleClearProvince}>
-                          광역시/도 해제
-                        </Button>
-                      ) : null}
-                      {selectedRegion ? (
-                        <Button variant="ghost" size="sm" onClick={handleClearRegion}>
-                          지역 해제
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
                 </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  {regionsLoading ? (
+                    <span className="text-xs text-muted-foreground">지역 정보를 불러오는 중...</span>
+                  ) : null}
+                  {regionsError ? (
+                    <span className="text-xs text-destructive">{regionsError}</span>
+                  ) : null}
+                  {selectedProvince ? (
+                    <Button variant="ghost" size="sm" onClick={handleClearProvince}>
+                      광역시/도 해제
+                    </Button>
+                  ) : null}
+                  {selectedRegion ? (
+                    <Button variant="ghost" size="sm" onClick={handleClearRegion}>
+                      지역 해제
+                    </Button>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+
+            {error ? (
+              <div className="space-y-3">
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+                <Button variant="outline" size="sm" onClick={handleRetry}>
+                  다시 시도
+                </Button>
               </div>
-              {error ? (
-                <div className="space-y-3">
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                  <Button variant="outline" size="sm" onClick={handleRetry}>
-                    다시 시도
-                  </Button>
-                </div>
-              ) : shouldShowRegionSkeleton ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-32 w-full" />
-                </div>
-              ) : (
-                <div aria-busy={regionTableBusy} className="relative">
-                  <DataTable
-                    columns={columns}
-                    data={museums}
-                    searchKey="name"
-                    searchPlaceholder="박물관명으로 검색..."
-                  />
-                </div>
-              )}
-            </div>
+            ) : shouldShowRegionSkeleton ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            ) : (
+              <div aria-busy={regionTableBusy} className="relative">
+                <DataTable
+                  columns={columns}
+                  data={museums}
+                  searchKey="name"
+                  searchPlaceholder="박물관명으로 검색..."
+                />
+              </div>
+            )}
           </TabsContent>
-          
-          <TabsContent value="nearby" className="mt-6">
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-2xl font-semibold tracking-tight text-foreground">내 주변 박물관 찾기</h2>
+
+          <TabsContent value="nearby" className="animate-fade-in-up space-y-6">
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="space-y-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="font-display text-2xl font-semibold tracking-tight">
+                      내 주변 박물관 찾기
+                    </CardTitle>
+                    <CardDescription aria-live="polite">{nearbyDescription}</CardDescription>
+                  </div>
                   {nearMeStatusMessage ? (
-                    <p className="text-xs text-muted-foreground sm:text-sm" role="status" aria-live="polite">
+                    <p
+                      className="text-xs text-muted-foreground sm:text-sm"
+                      role="status"
+                      aria-live="polite"
+                    >
                       {nearMeStatusMessage}
                     </p>
                   ) : null}
                 </div>
-                <p aria-live="polite" className="text-sm text-muted-foreground">
-                  {nearbyDescription}
-                </p>
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button
-                      type="button"
-                      variant={hasNearbyResults ? "secondary" : "outline"}
-                      tabIndex={0}
-                      aria-pressed={hasNearbyAttempt}
-                      aria-label="내 주변 박물관 찾기"
-                      onClick={handleNearMeClick}
-                      onKeyDown={handleNearMeKeyDown}
-                      disabled={isLocatingNearby || isFetchingNearby}
-                      className="min-w-[12rem]"
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+                  <Button
+                    type="button"
+                    variant={hasNearbyResults ? "secondary" : "default"}
+                    tabIndex={0}
+                    aria-pressed={hasNearbyAttempt}
+                    aria-label="내 주변 박물관 찾기"
+                    onClick={handleNearMeClick}
+                    onKeyDown={handleNearMeKeyDown}
+                    disabled={isLocatingNearby || isFetchingNearby}
+                    className="min-w-[14rem] gap-2"
+                  >
+                    <MapPin className="h-4 w-4" aria-hidden />
+                    {nearMeButtonLabel}
+                  </Button>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="nearby-radius"
+                      className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
                     >
-                      {nearMeButtonLabel}
-                    </Button>
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="nearby-radius" className="text-sm font-medium text-muted-foreground">
-                        검색 반경
-                      </Label>
-                      <Select
-                        value={nearbyRadius.toString()}
-                        onValueChange={handleRadiusChange}
-                        disabled={isLocatingNearby || isFetchingNearby}
-                      >
-                        <SelectTrigger id="nearby-radius" className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {NEARBY_RADIUS_OPTIONS.map((radiusOption) => (
-                            <SelectItem key={radiusOption} value={radiusOption.toString()}>
-                              {radiusOption}km
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                      검색 반경
+                    </Label>
+                    <Select
+                      value={nearbyRadius.toString()}
+                      onValueChange={handleRadiusChange}
+                      disabled={isLocatingNearby || isFetchingNearby}
+                    >
+                      <SelectTrigger id="nearby-radius" className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {NEARBY_RADIUS_OPTIONS.map((radiusOption) => (
+                          <SelectItem key={radiusOption} value={radiusOption.toString()}>
+                            {radiusOption}km
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </div>
-              {nearbyError ? (
-                <div className="space-y-3">
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{nearbyError}</AlertDescription>
-                  </Alert>
-                  <Button variant="outline" size="sm" onClick={handleNearbyRetry}>
-                    다시 시도
-                  </Button>
-                </div>
-              ) : shouldShowNearbySkeleton ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-32 w-full" />
-                </div>
-              ) : (
-                <div aria-busy={nearbyTableBusy} className="relative">
-                  <DataTable
-                    columns={nearbyColumns}
-                    data={nearbyMuseums ?? []}
-                    searchKey="name"
-                    searchPlaceholder="박물관명으로 검색..."
-                  />
-                </div>
-              )}
-              {usedFallback ? (
-                <Alert className="mt-4">
+              </CardContent>
+            </Card>
+
+            {nearbyError ? (
+              <div className="space-y-3">
+                <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    정확도를 높이기 위해 서버 확장 기능 없이 대체 계산을 사용했습니다.
-                  </AlertDescription>
+                  <AlertDescription>{nearbyError}</AlertDescription>
                 </Alert>
-              ) : null}
-            </div>
+                <Button variant="outline" size="sm" onClick={handleNearbyRetry}>
+                  다시 시도
+                </Button>
+              </div>
+            ) : shouldShowNearbySkeleton ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            ) : (
+              <div aria-busy={nearbyTableBusy} className="relative">
+                <DataTable
+                  columns={nearbyColumns}
+                  data={nearbyMuseums ?? []}
+                  searchKey="name"
+                  searchPlaceholder="박물관명으로 검색..."
+                />
+              </div>
+            )}
+            {usedFallback ? (
+              <Alert className="border-accent/40 bg-accent/5">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  정확도를 높이기 위해 서버 확장 기능 없이 대체 계산을 사용했습니다.
+                </AlertDescription>
+              </Alert>
+            ) : null}
           </TabsContent>
         </Tabs>
       </section>

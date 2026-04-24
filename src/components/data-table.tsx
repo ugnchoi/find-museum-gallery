@@ -79,18 +79,18 @@ export function DataTable<TData, TValue>({
             onChange={(event) =>
               table.getColumn(searchKey)?.setFilterValue(event.target.value)
             }
-            className="max-w-sm"
+            className="max-w-sm bg-card/60"
           />
         </div>
       )}
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-lg border border-border/60 bg-card/40 shadow-sm">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="border-border/60 bg-muted/40 hover:bg-muted/40">
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="text-xs uppercase tracking-wider text-muted-foreground">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -109,6 +109,7 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className="border-border/50 transition-colors hover:bg-accent/5"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -124,7 +125,7 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-32 text-center text-sm text-muted-foreground"
                 >
                   결과가 없습니다.
                 </TableCell>
@@ -133,12 +134,12 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2">
+      <div className="flex items-center justify-end gap-3">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length}개 중{" "}
-          {table.getRowModel().rows.length}개 표시
+          {table.getFilteredRowModel().rows.length.toLocaleString()}개 중{" "}
+          {table.getRowModel().rows.length.toLocaleString()}개 표시
         </div>
-        <div className="space-x-2">
+        <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"

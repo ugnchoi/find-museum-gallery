@@ -3,67 +3,67 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  --background: 40 30% 97%;
+  --foreground: 200 25% 12%;
 
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --muted: 40 15% 94%;
+  --muted-foreground: 215 12% 42%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
+  --popover: 40 30% 99%;
+  --popover-foreground: 200 25% 12%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card: 40 30% 99%;
+  --card-foreground: 200 25% 12%;
 
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
+  --border: 40 15% 88%;
+  --input: 40 15% 88%;
 
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
+  --primary: 200 30% 18%;
+  --primary-foreground: 40 30% 97%;
 
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 40 20% 92%;
+  --secondary-foreground: 200 30% 18%;
 
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --accent: 38 65% 52%;
+  --accent-foreground: 200 30% 14%;
 
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 55% 38%;
+  --destructive-foreground: 40 30% 97%;
 
-  --ring: 215 20.2% 65.1%;
+  --ring: 38 50% 55%;
 
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
+  --background: 200 20% 8%;
+  --foreground: 40 25% 94%;
 
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 200 18% 14%;
+  --muted-foreground: 40 10% 68%;
 
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 200 22% 10%;
+  --popover-foreground: 40 25% 94%;
 
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
+  --card: 200 22% 10%;
+  --card-foreground: 40 25% 94%;
 
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
+  --border: 200 15% 18%;
+  --input: 200 15% 18%;
 
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 40 25% 94%;
+  --primary-foreground: 200 30% 14%;
 
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 200 18% 14%;
+  --secondary-foreground: 40 25% 94%;
 
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 38 65% 58%;
+  --accent-foreground: 200 30% 10%;
 
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 55% 42%;
+  --destructive-foreground: 40 25% 94%;
 
-  --ring: 217.2 32.6% 17.5%;
+  --ring: 38 55% 50%;
 }
 
 * {
@@ -72,6 +72,7 @@
 
 body {
   @apply bg-background text-foreground;
+  font-feature-settings: "cv11", "ss01";
 }
 
 .container-grid {
