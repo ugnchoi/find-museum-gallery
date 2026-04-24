@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-import { AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { AlertCircle, Locate, MapPinOff } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { type GeoCoordinate } from "@/lib/geo";
@@ -192,6 +193,16 @@ export function MuseumMap({ museums, userLocation, radiusKm, className }: Museum
     };
   }, []);
 
+  const handleRecenter = useCallback(() => {
+    if (!userLocation || !mapRef.current) return;
+    const naver = window.naver?.maps;
+    if (!naver) return;
+    mapRef.current.panTo(new naver.LatLng(userLocation.latitude, userLocation.longitude));
+    if (mapRef.current.getZoom() < 13) {
+      mapRef.current.setZoom(13);
+    }
+  }, [userLocation]);
+
   if (status === "error") {
     return (
       <Alert variant="destructive">
@@ -201,8 +212,28 @@ export function MuseumMap({ museums, userLocation, radiusKm, className }: Museum
     );
   }
 
-  const showEmptyOverlay =
-    status === "ready" && plottedMuseums.length === 0 && !userLocation;
+  const emptyOverlay = (() => {
+    if (status !== "ready" || userLocation) return null;
+
+    if (museums.length === 0) {
+      return {
+        title: "검색 결과가 없습니다",
+        subtitle: "조건을 바꾸어 다시 찾아보세요."
+      };
+    }
+
+    if (plottedMuseums.length === 0) {
+      return {
+        title: "표시할 위치 정보가 없습니다",
+        subtitle: "선택한 기관들의 좌표가 등록되지 않았습니다."
+      };
+    }
+
+    return null;
+  })();
+
+  const showLegend =
+    status === "ready" && (Boolean(userLocation) || plottedMuseums.length > 0);
 
   return (
     <div
@@ -216,10 +247,56 @@ export function MuseumMap({ museums, userLocation, radiusKm, className }: Museum
           <Skeleton className="h-full w-full" />
         </div>
       ) : null}
-      <div ref={containerRef} className="h-[600px] w-full" aria-label="박물관 지도" />
-      {showEmptyOverlay ? (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm">
-          <p className="text-sm text-muted-foreground">표시할 위치 정보가 없습니다.</p>
+      <div
+        ref={containerRef}
+        className="h-[420px] w-full sm:h-[560px] lg:h-[640px]"
+        aria-label="박물관 지도"
+      />
+
+      {showLegend ? (
+        <div className="pointer-events-none absolute left-3 top-3 z-10 flex flex-col gap-1.5 rounded-lg border border-border/60 bg-card/95 px-3 py-2 text-xs shadow-sm backdrop-blur">
+          {userLocation ? (
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full bg-[hsl(200,80%,50%)] ring-2 ring-white"
+                aria-hidden
+              />
+              <span className="text-foreground">내 위치</span>
+            </div>
+          ) : null}
+          {plottedMuseums.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block h-3 w-2.5 rounded-sm bg-accent"
+                aria-hidden
+              />
+              <span className="text-foreground">박물관 · 갤러리</span>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {userLocation && status === "ready" ? (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={handleRecenter}
+          className="absolute bottom-3 right-3 z-10 h-9 gap-1.5 shadow-md"
+          aria-label="내 위치로 이동"
+        >
+          <Locate className="h-4 w-4" aria-hidden />
+          내 위치로
+        </Button>
+      ) : null}
+
+      {emptyOverlay ? (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/75 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <MapPinOff className="h-8 w-8 text-muted-foreground" aria-hidden />
+            <p className="text-sm font-medium text-foreground">{emptyOverlay.title}</p>
+            <p className="text-xs text-muted-foreground">{emptyOverlay.subtitle}</p>
+          </div>
         </div>
       ) : null}
     </div>

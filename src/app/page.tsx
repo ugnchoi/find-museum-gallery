@@ -658,6 +658,7 @@ export default function HomePage() {
         };
 
         setUserLocation(nextLocation);
+        setNearbyViewMode("map");
         void fetchNearbyMuseums(nextLocation, nearbyRadius, requestId);
       },
       (geoError) => {
