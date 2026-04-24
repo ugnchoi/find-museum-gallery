@@ -27,6 +27,46 @@ const toDistanceString = (value: unknown): string | undefined => {
   return undefined;
 };
 
+const toCoordinateNumber = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+      return null;
+    }
+
+    const parsed = Number(trimmed);
+
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return null;
+};
+
+const parseCoordinates = (
+  latitudeValue: unknown,
+  longitudeValue: unknown
+): { lat: number; lon: number } | null => {
+  const lat = toCoordinateNumber(latitudeValue);
+  const lon = toCoordinateNumber(longitudeValue);
+
+  if (lat === null || lon === null) {
+    return null;
+  }
+
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    return null;
+  }
+
+  return { lat, lon };
+};
+
 export const isRegionUuid = (value: string | null | undefined): value is string =>
   Boolean(value && REGION_UUID_REGEX.test(value));
 
@@ -63,6 +103,7 @@ export const normalizeMuseum = (row: Record<string, any>): Museum => {
     referenceDate: row.referenceDate ?? row.data_update_date ?? "",
     latitude: row.latitude ? String(row.latitude) : "",
     longitude: row.longitude ? String(row.longitude) : "",
+    coordinates: parseCoordinates(row.latitude, row.longitude),
     distanceKm: toDistanceString(distanceValue)
   };
 };

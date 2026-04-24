@@ -19,5 +19,6 @@ export type Museum = {
   referenceDate: string;
   latitude: string;
   longitude: string;
+  coordinates: { lat: number; lon: number } | null;
   distanceKm?: string;
 };

@@ -7,6 +7,8 @@ import { ArrowUpDown, Globe, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
+import { MuseumMap } from "@/components/map/museum-map";
+import { ViewToggle, type ViewMode } from "@/components/view-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -201,6 +203,8 @@ const NEARBY_RADIUS_OPTIONS = [10, 25, 50];
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"regions" | "nearby">("regions");
+  const [regionsViewMode, setRegionsViewMode] = useState<ViewMode>("list");
+  const [nearbyViewMode, setNearbyViewMode] = useState<ViewMode>("list");
   const [museums, setMuseums] = useState<Museum[]>([]);
   const [regionTotalCount, setRegionTotalCount] = useState(0);
   const [nearbyTotalCount, setNearbyTotalCount] = useState(0);
@@ -769,13 +773,14 @@ export default function HomePage() {
           <TabsContent value="regions" className="animate-fade-in-up space-y-6">
             <Card className="border-border/60 shadow-sm">
               <CardHeader className="space-y-2">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
                     <CardTitle className="font-display text-2xl font-semibold tracking-tight">
                       지역별 박물관 목록
                     </CardTitle>
                     <CardDescription aria-live="polite">{regionDescription}</CardDescription>
                   </div>
+                  <ViewToggle value={regionsViewMode} onChange={setRegionsViewMode} />
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -873,6 +878,10 @@ export default function HomePage() {
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-64 w-full" />
               </div>
+            ) : regionsViewMode === "map" ? (
+              <div aria-busy={regionTableBusy}>
+                <MuseumMap museums={museums} />
+              </div>
             ) : (
               <div aria-busy={regionTableBusy} className="relative">
                 <DataTable
@@ -888,22 +897,23 @@ export default function HomePage() {
           <TabsContent value="nearby" className="animate-fade-in-up space-y-6">
             <Card className="border-border/60 shadow-sm">
               <CardHeader className="space-y-2">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
                     <CardTitle className="font-display text-2xl font-semibold tracking-tight">
                       내 주변 박물관 찾기
                     </CardTitle>
                     <CardDescription aria-live="polite">{nearbyDescription}</CardDescription>
+                    {nearMeStatusMessage ? (
+                      <p
+                        className="text-xs text-muted-foreground"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        {nearMeStatusMessage}
+                      </p>
+                    ) : null}
                   </div>
-                  {nearMeStatusMessage ? (
-                    <p
-                      className="text-xs text-muted-foreground sm:text-sm"
-                      role="status"
-                      aria-live="polite"
-                    >
-                      {nearMeStatusMessage}
-                    </p>
-                  ) : null}
+                  <ViewToggle value={nearbyViewMode} onChange={setNearbyViewMode} />
                 </div>
               </CardHeader>
               <CardContent>
@@ -964,6 +974,14 @@ export default function HomePage() {
               <div className="space-y-3">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-64 w-full" />
+              </div>
+            ) : nearbyViewMode === "map" ? (
+              <div aria-busy={nearbyTableBusy}>
+                <MuseumMap
+                  museums={nearbyMuseums ?? []}
+                  userLocation={userLocation}
+                  radiusKm={nearbyRadius}
+                />
               </div>
             ) : (
               <div aria-busy={nearbyTableBusy} className="relative">
