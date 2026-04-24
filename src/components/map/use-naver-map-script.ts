@@ -80,7 +80,7 @@ export function useNaverMapScript(): NaverMapScriptState {
 
     const script = document.createElement("script");
     script.id = SCRIPT_ID;
-    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${encodeURIComponent(
+    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${encodeURIComponent(
       clientId
     )}`;
     script.async = true;
